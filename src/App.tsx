@@ -24,7 +24,19 @@ import {
   X,
   Send,
   Copy,
-  Mail
+  Mail,
+  Search,
+  Filter,
+  Phone,
+  MapPin,
+  Edit,
+  Trash2,
+  Save,
+  Building,
+  CheckCircle,
+  TrendingDown,
+  Download,
+  Eye
 } from 'lucide-react';
 
 export type ActiveTab = 
@@ -36,6 +48,49 @@ export type ActiveTab =
   | 'portal' 
   | 'documents' 
   | 'video';
+
+// Types
+interface Client {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  company?: string;
+  status: 'active' | 'inactive' | 'prospective';
+  createdAt: Date;
+  lastActivity: Date;
+  totalBilled: number;
+  outstandingBalance: number;
+}
+
+interface Matter {
+  id: string;
+  clientId: string;
+  title: string;
+  description: string;
+  type: 'litigation' | 'corporate' | 'real-estate' | 'family' | 'criminal' | 'other';
+  status: 'active' | 'closed' | 'pending' | 'on-hold';
+  attorney: string;
+  startDate: Date;
+  endDate?: Date;
+  billingRate: number;
+  totalTime: number;
+  totalBilled: number;
+  trustBalance: number;
+}
+
+interface TrustTransaction {
+  id: string;
+  matterId: string;
+  type: 'deposit' | 'withdrawal' | 'transfer';
+  amount: number;
+  description: string;
+  date: Date;
+  checkNumber?: string;
+  balance: number;
+  status: 'pending' | 'cleared' | 'rejected';
+}
 
 // Sidebar Component
 function Sidebar({ activeTab, onTabChange }: { activeTab: ActiveTab; onTabChange: (tab: ActiveTab) => void }) {
@@ -255,67 +310,972 @@ function Dashboard() {
   );
 }
 
-// Simple placeholder components
+// Full Client Management Component
 function ClientManagement() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedFilter, setSelectedFilter] = useState('all');
+  const [showAddClient, setShowAddClient] = useState(false);
+  const [showEditClient, setShowEditClient] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [clients, setClients] = useState<Client[]>([
+    {
+      id: '1',
+      name: 'John Smith',
+      email: 'john.smith@email.com',
+      phone: '(555) 123-4567',
+      address: '123 Main St, New York, NY 10001',
+      company: 'Smith Industries',
+      status: 'active',
+      createdAt: new Date('2024-01-15'),
+      lastActivity: new Date('2024-12-09'),
+      totalBilled: 45000,
+      outstandingBalance: 0
+    },
+    {
+      id: '2',
+      name: 'Sarah Johnson',
+      email: 'sarah.j@email.com',
+      phone: '(555) 987-6543',
+      address: '456 Oak Ave, Los Angeles, CA 90210',
+      status: 'active',
+      createdAt: new Date('2024-02-20'),
+      lastActivity: new Date('2024-12-07'),
+      totalBilled: 28500,
+      outstandingBalance: 5000
+    },
+    {
+      id: '3',
+      name: 'Michael Brown',
+      email: 'mbrown@email.com',
+      phone: '(555) 456-7890',
+      address: '789 Pine St, Chicago, IL 60601',
+      company: 'Brown & Associates',
+      status: 'prospective',
+      createdAt: new Date('2024-12-01'),
+      lastActivity: new Date('2024-12-04'),
+      totalBilled: 0,
+      outstandingBalance: 0
+    }
+  ]);
+
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    company: '',
+    status: 'prospective' as Client['status']
+  });
+
+  const filteredClients = clients.filter(client => {
+    const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         client.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = selectedFilter === 'all' || client.status === selectedFilter;
+    return matchesSearch && matchesFilter;
+  });
+
+  const getStatusColor = (status: Client['status']) => {
+    switch (status) {
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'inactive': return 'bg-gray-100 text-gray-800';
+      case 'prospective': return 'bg-blue-100 text-blue-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      address: '',
+      company: '',
+      status: 'prospective'
+    });
+  };
+
+  const handleAddClient = () => {
+    setShowAddClient(true);
+    resetForm();
+  };
+
+  const handleEditClient = (client: Client) => {
+    setSelectedClient(client);
+    setFormData({
+      name: client.name,
+      email: client.email,
+      phone: client.phone,
+      address: client.address,
+      company: client.company || '',
+      status: client.status
+    });
+    setShowEditClient(true);
+  };
+
+  const handleSaveClient = () => {
+    if (!formData.name || !formData.email || !formData.phone) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    const newClient: Client = {
+      id: showEditClient ? selectedClient!.id : Date.now().toString(),
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      address: formData.address,
+      company: formData.company || undefined,
+      status: formData.status,
+      createdAt: showEditClient ? selectedClient!.createdAt : new Date(),
+      lastActivity: new Date(),
+      totalBilled: showEditClient ? selectedClient!.totalBilled : 0,
+      outstandingBalance: showEditClient ? selectedClient!.outstandingBalance : 0
+    };
+
+    if (showEditClient) {
+      setClients(clients.map(client => 
+        client.id === selectedClient!.id ? newClient : client
+      ));
+      setShowEditClient(false);
+    } else {
+      setClients([...clients, newClient]);
+      setShowAddClient(false);
+    }
+
+    resetForm();
+    setSelectedClient(null);
+  };
+
+  const closeModals = () => {
+    setShowAddClient(false);
+    setShowEditClient(false);
+    setShowDeleteConfirm(false);
+    setSelectedClient(null);
+    resetForm();
+  };
+
   return (
     <div className="p-8 bg-slate-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-slate-900 mb-8">Client Management</h1>
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center">
-          <Users className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-slate-900 mb-2">Client Management System</h3>
-          <p className="text-slate-600">Manage your client relationships and information</p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">Client Management</h1>
+            <p className="text-slate-600 mt-2">Manage your client relationships and information</p>
+          </div>
+          <button 
+            onClick={handleAddClient}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+          >
+            <Plus className="h-5 w-5" />
+            <span>Add Client</span>
+          </button>
         </div>
+
+        {/* Search and Filter Bar */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+              <input
+                type="text"
+                placeholder="Search clients by name or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              />
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+                <select
+                  value={selectedFilter}
+                  onChange={(e) => setSelectedFilter(e.target.value)}
+                  className="pl-10 pr-8 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                >
+                  <option value="all">All Clients</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="prospective">Prospective</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Clients Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredClients.map((client) => (
+            <div 
+              key={client.id} 
+              className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                    {client.name.split(' ').map(n => n[0]).join('')}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-slate-900">{client.name}</h3>
+                    {client.company && <p className="text-sm text-slate-600">{client.company}</p>}
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(client.status)}`}>
+                    {client.status.charAt(0).toUpperCase() + client.status.slice(1)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-3 mb-6">
+                <div className="flex items-center space-x-3 text-sm text-slate-600">
+                  <Mail className="h-4 w-4" />
+                  <span>{client.email}</span>
+                </div>
+                <div className="flex items-center space-x-3 text-sm text-slate-600">
+                  <Phone className="h-4 w-4" />
+                  <span>{client.phone}</span>
+                </div>
+                <div className="flex items-center space-x-3 text-sm text-slate-600">
+                  <MapPin className="h-4 w-4" />
+                  <span>{client.address}</span>
+                </div>
+              </div>
+
+              <div className="border-t border-slate-200 pt-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-slate-500">Total Billed</p>
+                    <p className="font-semibold text-slate-900">${client.totalBilled.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">Outstanding</p>
+                    <p className={`font-semibold ${client.outstandingBalance > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      ${client.outstandingBalance.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-200">
+                <p className="text-xs text-slate-500">
+                  Last activity: {client.lastActivity.toLocaleDateString()}
+                </p>
+                <div className="flex items-center space-x-2">
+                  <button 
+                    onClick={() => handleEditClient(client)}
+                    className="p-2 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                    title="Edit Client"
+                  >
+                    <Edit className="h-4 w-4 text-blue-500" />
+                  </button>
+                  <button 
+                    className="p-2 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                    title="Delete Client"
+                  >
+                    <Trash2 className="h-4 w-4 text-red-500" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Add/Edit Client Modal */}
+        {(showAddClient || showEditClient) && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-slate-200">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-slate-900">
+                    {showEditClient ? 'Edit Client' : 'Add New Client'}
+                  </h2>
+                  <button 
+                    onClick={closeModals}
+                    className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                  >
+                    <X className="h-5 w-5 text-slate-400" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Full Name *
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+                      <input
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                        className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Enter full name"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Email Address *
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+                      <input
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                        className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Enter email address"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Phone Number *
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+                      <input
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                        className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="(555) 123-4567"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Company
+                    </label>
+                    <div className="relative">
+                      <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+                      <input
+                        type="text"
+                        value={formData.company}
+                        onChange={(e) => setFormData({...formData, company: e.target.value})}
+                        className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Company name (optional)"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Address
+                  </label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-3 text-slate-400 h-5 w-5" />
+                    <textarea
+                      value={formData.address}
+                      onChange={(e) => setFormData({...formData, address: e.target.value})}
+                      className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter full address"
+                      rows={3}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Client Status
+                  </label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({...formData, status: e.target.value as Client['status']})}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="prospective">Prospective</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="p-6 border-t border-slate-200 flex items-center justify-end space-x-4">
+                <button
+                  onClick={closeModals}
+                  className="px-6 py-3 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveClient}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                >
+                  <Save className="h-5 w-5" />
+                  <span>{showEditClient ? 'Update Client' : 'Add Client'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
+// Full Matter Management Component
 function MatterManagement() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedFilter, setSelectedFilter] = useState('all');
+  const [showNewMatter, setShowNewMatter] = useState(false);
+
+  const mockMatters: Matter[] = [
+    {
+      id: 'M-2024-001',
+      clientId: '1',
+      title: 'Smith Industries Contract Review',
+      description: 'Review and negotiate master service agreement with new vendor',
+      type: 'corporate',
+      status: 'active',
+      attorney: 'Sarah Johnson',
+      startDate: new Date('2024-01-14'),
+      billingRate: 450,
+      totalTime: 25.5,
+      totalBilled: 11475,
+      trustBalance: 5000
+    },
+    {
+      id: 'M-2024-002',
+      clientId: '2',
+      title: 'Johnson Estate Planning',
+      description: 'Complete estate planning package including will, trust, and powers of attorney',
+      type: 'family',
+      status: 'active',
+      attorney: 'Michael Davis',
+      startDate: new Date('2024-02-01'),
+      billingRate: 350,
+      totalTime: 18.0,
+      totalBilled: 6300,
+      trustBalance: 2500
+    }
+  ];
+
+  const filteredMatters = mockMatters.filter(matter => {
+    const matchesSearch = matter.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         matter.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = selectedFilter === 'all' || matter.status === selectedFilter;
+    return matchesSearch && matchesFilter;
+  });
+
+  const getStatusColor = (status: Matter['status']) => {
+    switch (status) {
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'closed': return 'bg-gray-100 text-gray-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'on-hold': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getTypeColor = (type: Matter['type']) => {
+    switch (type) {
+      case 'litigation': return 'bg-red-100 text-red-800';
+      case 'corporate': return 'bg-blue-100 text-blue-800';
+      case 'real-estate': return 'bg-green-100 text-green-800';
+      case 'family': return 'bg-purple-100 text-purple-800';
+      case 'criminal': return 'bg-orange-100 text-orange-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   return (
     <div className="p-8 bg-slate-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-slate-900 mb-8">Matter Management</h1>
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center">
-          <Briefcase className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-slate-900 mb-2">Matter Management System</h3>
-          <p className="text-slate-600">Track and manage all legal matters and cases</p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">Matter Management</h1>
+            <p className="text-slate-600 mt-2">Track and manage all legal matters and cases</p>
+          </div>
+          <button 
+            onClick={() => setShowNewMatter(true)}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2"
+          >
+            <Plus className="h-5 w-5" />
+            <span>New Matter</span>
+          </button>
+        </div>
+
+        {/* Search and Filter Bar */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+              <input
+                type="text"
+                placeholder="Search matters by title or description..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+                <select
+                  value={selectedFilter}
+                  onChange={(e) => setSelectedFilter(e.target.value)}
+                  className="pl-10 pr-8 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="all">All Status</option>
+                  <option value="active">Active</option>
+                  <option value="pending">Pending</option>
+                  <option value="on-hold">On Hold</option>
+                  <option value="closed">Closed</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Matters List */}
+        <div className="space-y-6">
+          {filteredMatters.map((matter) => (
+            <div key={matter.id} className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <h3 className="text-xl font-semibold text-slate-900">{matter.title}</h3>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(matter.status)}`}>
+                      {matter.status.charAt(0).toUpperCase() + matter.status.slice(1)}
+                    </span>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(matter.type)}`}>
+                      {matter.type.charAt(0).toUpperCase() + matter.type.slice(1)}
+                    </span>
+                  </div>
+                  <p className="text-slate-600 mb-3">{matter.description}</p>
+                  <div className="flex items-center space-x-6 text-sm text-slate-500">
+                    <div className="flex items-center space-x-1">
+                      <span className="font-medium">Matter ID:</span>
+                      <span>{matter.id}</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <User className="h-4 w-4" />
+                      <span>{matter.attorney}</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Calendar className="h-4 w-4" />
+                      <span>Started {matter.startDate.toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+                <div className="text-center p-4 bg-slate-50 rounded-lg">
+                  <div className="flex items-center justify-center mb-2">
+                    <Clock className="h-5 w-5 text-slate-500" />
+                  </div>
+                  <p className="text-sm text-slate-500">Total Hours</p>
+                  <p className="text-lg font-semibold text-slate-900">{matter.totalTime}</p>
+                </div>
+                <div className="text-center p-4 bg-slate-50 rounded-lg">
+                  <div className="flex items-center justify-center mb-2">
+                    <DollarSign className="h-5 w-5 text-slate-500" />
+                  </div>
+                  <p className="text-sm text-slate-500">Total Billed</p>
+                  <p className="text-lg font-semibold text-slate-900">${matter.totalBilled.toLocaleString()}</p>
+                </div>
+                <div className="text-center p-4 bg-slate-50 rounded-lg">
+                  <div className="flex items-center justify-center mb-2">
+                    <Briefcase className="h-5 w-5 text-slate-500" />
+                  </div>
+                  <p className="text-sm text-slate-500">Billing Rate</p>
+                  <p className="text-lg font-semibold text-slate-900">${matter.billingRate}/hr</p>
+                </div>
+                <div className="text-center p-4 bg-slate-50 rounded-lg">
+                  <div className="flex items-center justify-center mb-2">
+                    <DollarSign className="h-5 w-5 text-green-500" />
+                  </div>
+                  <p className="text-sm text-slate-500">Trust Balance</p>
+                  <p className="text-lg font-semibold text-green-600">${matter.trustBalance.toLocaleString()}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+                <div className="text-sm text-slate-500">
+                  Last updated: 7/16/2025
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button className="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg flex items-center space-x-2">
+                    <Eye className="h-4 w-4" />
+                    <span>View Details</span>
+                  </button>
+                  <button className="p-2 hover:bg-slate-100 rounded-lg">
+                    <Edit className="h-4 w-4 text-slate-400" />
+                  </button>
+                  <button className="p-2 hover:bg-red-50 rounded-lg">
+                    <Trash2 className="h-4 w-4 text-red-400" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
   );
 }
 
+// Full Trust Accounting Component
 function TrustAccounting() {
+  const [selectedFilter, setSelectedFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const mockTransactions: TrustTransaction[] = [
+    {
+      id: '1',
+      matterId: 'M-2024-001',
+      type: 'deposit',
+      amount: 5000,
+      description: 'Initial retainer deposit for Smith Industries...',
+      date: new Date('2024-11-30'),
+      checkNumber: '1234',
+      balance: 5000,
+      status: 'cleared'
+    }
+  ];
+
+  const totalTrustBalance = 6000;
+  const pendingDeposits = 15000;
+  const monthlyDeposits = 0;
+  const monthlyWithdrawals = 0;
+
+  const filteredTransactions = mockTransactions.filter(transaction => {
+    const matchesSearch = transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         transaction.matterId.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = selectedFilter === 'all' || transaction.type === selectedFilter;
+    return matchesSearch && matchesFilter;
+  });
+
+  const getStatusIcon = (status: TrustTransaction['status']) => {
+    switch (status) {
+      case 'cleared': return <CheckCircle className="h-5 w-5 text-green-500" />;
+      case 'pending': return <Clock className="h-5 w-5 text-yellow-500" />;
+      case 'rejected': return <AlertTriangle className="h-5 w-5 text-red-500" />;
+      default: return <Clock className="h-5 w-5 text-gray-500" />;
+    }
+  };
+
   return (
     <div className="p-8 bg-slate-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-slate-900 mb-8">Trust Accounting</h1>
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center">
-          <DollarSign className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-slate-900 mb-2">Trust Accounting System</h3>
-          <p className="text-slate-600">Monitor and manage client trust account transactions</p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">Trust Accounting</h1>
+            <p className="text-slate-600 mt-2">Monitor and manage client trust account transactions</p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <button className="bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center space-x-2">
+              <Download className="h-5 w-5" />
+              <span>Export Report</span>
+            </button>
+            <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2">
+              <Plus className="h-5 w-5" />
+              <span>Trust Transfer</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Trust Balance Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600">Total Trust Balance</p>
+                <p className="text-2xl font-bold text-slate-900 mt-2">${totalTrustBalance.toLocaleString()}</p>
+              </div>
+              <div className="p-3 bg-blue-100 rounded-lg">
+                <DollarSign className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600">Pending Deposits</p>
+                <p className="text-2xl font-bold text-yellow-600 mt-2">${pendingDeposits.toLocaleString()}</p>
+              </div>
+              <div className="p-3 bg-yellow-100 rounded-lg">
+                <Clock className="h-6 w-6 text-yellow-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600">This Month - Deposits</p>
+                <p className="text-2xl font-bold text-green-600 mt-2">${monthlyDeposits.toLocaleString()}</p>
+              </div>
+              <div className="p-3 bg-green-100 rounded-lg">
+                <TrendingUp className="h-6 w-6 text-green-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600">This Month - Withdrawals</p>
+                <p className="text-2xl font-bold text-red-600 mt-2">${monthlyWithdrawals.toLocaleString()}</p>
+              </div>
+              <div className="p-3 bg-red-100 rounded-lg">
+                <TrendingDown className="h-6 w-6 text-red-600" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Search and Filter */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+              <input
+                type="text"
+                placeholder="Search transactions by description or matter ID..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            <div className="relative">
+              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+              <select
+                value={selectedFilter}
+                onChange={(e) => setSelectedFilter(e.target.value)}
+                className="pl-10 pr-8 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">All Transactions</option>
+                <option value="deposit">Deposits</option>
+                <option value="withdrawal">Withdrawals</option>
+                <option value="transfer">Transfers</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Transactions Table */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-200">
+            <h3 className="text-lg font-semibold text-slate-900">Recent Transactions</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Matter</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Description</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Balance</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-slate-200">
+                {filteredTransactions.map((transaction) => (
+                  <tr key={transaction.id} className="hover:bg-slate-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                      {transaction.date.toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
+                      {transaction.matterId}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-900 max-w-xs truncate">
+                      {transaction.description}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        transaction.type === 'deposit' 
+                          ? 'bg-green-100 text-green-800'
+                          : transaction.type === 'withdrawal'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <span className={transaction.type === 'deposit' ? 'text-green-600' : 'text-red-600'}>
+                        {transaction.type === 'deposit' ? '+' : '-'}${transaction.amount.toLocaleString()}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                      ${transaction.balance.toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center space-x-2">
+                        {getStatusIcon(transaction.status)}
+                        <span className="text-sm text-slate-600 capitalize">{transaction.status}</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
+// Full Calendar Component
 function CalendarView() {
+  const [currentDate, setCurrentDate] = useState(new Date(2025, 6, 16)); // July 16, 2025
+  const [selectedDate, setSelectedDate] = useState(new Date(2025, 6, 16));
+
+  const getDaysInMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+
+  const daysInMonth = getDaysInMonth(currentDate);
+  const firstDay = getFirstDayOfMonth(currentDate);
+  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  const emptyDays = Array.from({ length: firstDay }, (_, i) => i);
+
+  const monthYearText = currentDate.toLocaleDateString('en-US', { 
+    month: 'long', 
+    year: 'numeric' 
+  });
+
   return (
     <div className="p-8 bg-slate-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-slate-900 mb-8">Calendar</h1>
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center">
-          <Calendar className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-slate-900 mb-2">Calendar System</h3>
-          <p className="text-slate-600">Manage appointments, hearings, and deadlines</p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">Calendar</h1>
+            <p className="text-slate-600 mt-2">Manage appointments, hearings, and deadlines</p>
+          </div>
+          <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2">
+            <Plus className="h-5 w-5" />
+            <span>New Event</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Calendar */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+              {/* Calendar Header */}
+              <div className="flex items-center justify-between p-6 border-b border-slate-200">
+                <h2 className="text-xl font-semibold text-slate-900">{monthYearText}</h2>
+                <div className="flex items-center space-x-2">
+                  <button className="p-2 hover:bg-slate-100 rounded-lg">
+                    <span className="sr-only">Previous month</span>
+                    ←
+                  </button>
+                  <button className="p-2 hover:bg-slate-100 rounded-lg">
+                    <span className="sr-only">Next month</span>
+                    →
+                  </button>
+                </div>
+              </div>
+
+              {/* Calendar Grid */}
+              <div className="p-6">
+                <div className="grid grid-cols-7 gap-1 mb-4">
+                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                    <div key={day} className="p-3 text-center text-sm font-medium text-slate-500">
+                      {day}
+                    </div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-7 gap-1">
+                  {emptyDays.map(day => (
+                    <div key={`empty-${day}`} className="p-3 h-24"></div>
+                  ))}
+                  {days.map(day => {
+                    const isSelected = selectedDate.getDate() === day && 
+                                     selectedDate.getMonth() === currentDate.getMonth() &&
+                                     selectedDate.getFullYear() === currentDate.getFullYear();
+                    const isToday = day === 16; // July 16 is highlighted
+
+                    return (
+                      <button
+                        key={day}
+                        onClick={() => setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day))}
+                        className={`p-3 h-24 text-left border rounded-lg hover:bg-slate-50 transition-colors ${
+                          isSelected ? 'bg-blue-50 border-blue-200' : 'border-slate-200'
+                        } ${isToday ? 'bg-blue-100' : ''}`}
+                      >
+                        <div className={`text-sm font-medium mb-1 ${
+                          isToday ? 'text-blue-600' : 'text-slate-900'
+                        }`}>
+                          {day}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Events Sidebar */}
+          <div className="space-y-6">
+            {/* Selected Date Events */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+              <div className="p-6 border-b border-slate-200">
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Wednesday, July 16
+                </h3>
+              </div>
+              <div className="p-6">
+                <div className="text-center py-8">
+                  <Calendar className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                  <p className="text-slate-500">No events scheduled for this date</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">Quick Actions</h3>
+              <div className="space-y-3">
+                <button className="w-full flex items-center space-x-3 p-3 text-left rounded-lg hover:bg-slate-50 transition-colors">
+                  <Plus className="h-5 w-5 text-blue-500" />
+                  <span className="text-slate-700">Schedule Appointment</span>
+                </button>
+                <button className="w-full flex items-center space-x-3 p-3 text-left rounded-lg hover:bg-slate-50 transition-colors">
+                  <Calendar className="h-5 w-5 text-green-500" />
+                  <span className="text-slate-700">Add Court Date</span>
+                </button>
+                <button className="w-full flex items-center space-x-3 p-3 text-left rounded-lg hover:bg-slate-50 transition-colors">
+                  <Clock className="h-5 w-5 text-yellow-500" />
+                  <span className="text-slate-700">Set Deadline</span>
+                </button>
+                <button className="w-full flex items-center space-x-3 p-3 text-left rounded-lg hover:bg-slate-50 transition-colors">
+                  <Video className="h-5 w-5 text-purple-500" />
+                  <span className="text-slate-700">Video Meeting</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
+// Simple placeholder components
 function ClientPortal() {
   return (
     <div className="p-8 bg-slate-50 min-h-screen">
