@@ -14,42 +14,14 @@ import {
   Clock,
   AlertTriangle,
   Plus,
-  Search,
-  Filter,
-  Mail,
-  Phone,
-  MapPin,
-  Edit,
-  Trash2,
-  Eye,
-  Download,
-  Send,
   User,
-  Building,
-  CheckCircle,
-  X,
-  Save,
-  Upload,
-  PenTool,
-  ArrowLeft,
-  MoreVertical,
-  MessageSquare,
-  Settings,
-  LogOut,
-  Home,
-  Shield,
-  Lock,
-  EyeOff,
-  Copy,
-  Check,
-  Link,
-  UserPlus,
-  PhoneOff,
-  Monitor,
   Mic,
   MicOff,
   VideoOff,
-  Camera
+  PhoneOff,
+  Monitor,
+  MessageSquare,
+  X
 } from 'lucide-react';
 
 export type ActiveTab = 
@@ -61,51 +33,6 @@ export type ActiveTab =
   | 'portal' 
   | 'documents' 
   | 'video';
-
-// Types
-interface Client {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  company?: string;
-  status: 'active' | 'inactive' | 'prospective';
-  createdAt: Date;
-  lastActivity: Date;
-  totalBilled: number;
-  outstandingBalance: number;
-  avatar?: string;
-}
-
-interface Matter {
-  id: string;
-  clientId: string;
-  title: string;
-  description: string;
-  type: 'litigation' | 'corporate' | 'real-estate' | 'family' | 'criminal' | 'other';
-  status: 'active' | 'closed' | 'pending' | 'on-hold';
-  attorney: string;
-  startDate: Date;
-  endDate?: Date;
-  billingRate: number;
-  totalTime: number;
-  totalBilled: number;
-  trustBalance: number;
-}
-
-interface CalendarEvent {
-  id: string;
-  title: string;
-  description?: string;
-  start: Date;
-  end: Date;
-  type: 'appointment' | 'hearing' | 'deadline' | 'meeting';
-  matterId?: string;
-  clientId?: string;
-  location?: string;
-  attendees: string[];
-}
 
 // Sidebar Component
 function Sidebar({ activeTab, onTabChange }: { activeTab: ActiveTab; onTabChange: (tab: ActiveTab) => void }) {
@@ -176,7 +103,6 @@ function Dashboard() {
       name: 'Active Clients',
       value: '247',
       change: '+12%',
-      trend: 'up',
       icon: Users,
       color: 'bg-blue-500'
     },
@@ -184,7 +110,6 @@ function Dashboard() {
       name: 'Open Matters',
       value: '89',
       change: '+5%',
-      trend: 'up',
       icon: Briefcase,
       color: 'bg-green-500'
     },
@@ -192,7 +117,6 @@ function Dashboard() {
       name: 'Trust Balance',
       value: '$1.2M',
       change: '+8%',
-      trend: 'up',
       icon: DollarSign,
       color: 'bg-yellow-500'
     },
@@ -200,18 +124,17 @@ function Dashboard() {
       name: 'This Month Revenue',
       value: '$85,430',
       change: '+15%',
-      trend: 'up',
       icon: TrendingUp,
       color: 'bg-purple-500'
     }
   ];
 
   const recentActivities = [
-    { id: 1, action: 'New client consultation scheduled', time: '2 hours ago', type: 'calendar' },
-    { id: 2, action: 'Trust deposit processed for Matter #2023-45', time: '4 hours ago', type: 'trust' },
-    { id: 3, action: 'Document signed by client John Doe', time: '6 hours ago', type: 'document' },
-    { id: 4, action: 'Court hearing reminder for tomorrow', time: '1 day ago', type: 'reminder' },
-    { id: 5, action: 'Invoice #2024-001 sent to client', time: '2 days ago', type: 'billing' }
+    { id: 1, action: 'New client consultation scheduled', time: '2 hours ago' },
+    { id: 2, action: 'Trust deposit processed for Matter #2023-45', time: '4 hours ago' },
+    { id: 3, action: 'Document signed by client John Doe', time: '6 hours ago' },
+    { id: 4, action: 'Court hearing reminder for tomorrow', time: '1 day ago' },
+    { id: 5, action: 'Invoice #2024-001 sent to client', time: '2 days ago' }
   ];
 
   const upcomingDeadlines = [
@@ -329,7 +252,7 @@ function Dashboard() {
   );
 }
 
-// Simple placeholder components for other tabs
+// Simple placeholder components
 function ClientManagement() {
   return (
     <div className="p-8 bg-slate-50 min-h-screen">
@@ -420,98 +343,47 @@ function DocumentCenter() {
   );
 }
 
+// Working Video Conferencing Component
 function VideoConferencing() {
   const [isInCall, setIsInCall] = useState(false);
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [isMicOn, setIsMicOn] = useState(true);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
-  const [currentMeeting, setCurrentMeeting] = useState<{
-    id: string;
-    title: string;
-    participants: string[];
-  } | null>(null);
 
   const handleStartMeeting = async () => {
-    setIsConnecting(true);
-    setCurrentMeeting({
-      id: `MEET-${Date.now()}`,
-      title: 'Video Meeting',
-      participants: ['You', 'Client']
-    });
-
     try {
-      // Request camera and microphone access
+      // Request camera access
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
         audio: true
       });
       
-      setLocalStream(stream);
       setIsInCall(true);
       
-      // Display the video stream
+      // Show video in the video element
       setTimeout(() => {
         const videoElement = document.getElementById('localVideo') as HTMLVideoElement;
         if (videoElement && stream) {
           videoElement.srcObject = stream;
-          videoElement.play().catch(console.error);
+          videoElement.play();
         }
       }, 100);
       
     } catch (error) {
-      console.error('Error accessing media devices:', error);
-      alert('Camera/microphone access denied. Please allow access and try again.');
-    } finally {
-      setIsConnecting(false);
+      console.error('Camera access denied:', error);
+      alert('Please allow camera access to start the meeting');
     }
   };
 
   const handleEndCall = () => {
-    if (localStream) {
-      localStream.getTracks().forEach(track => track.stop());
-      setLocalStream(null);
-    }
     setIsInCall(false);
-    setCurrentMeeting(null);
-  };
-
-  const toggleVideo = () => {
-    if (localStream) {
-      const videoTrack = localStream.getVideoTracks()[0];
-      if (videoTrack) {
-        videoTrack.enabled = !isVideoOn;
-        setIsVideoOn(!isVideoOn);
-      }
+    // Stop all video streams
+    const videoElement = document.getElementById('localVideo') as HTMLVideoElement;
+    if (videoElement && videoElement.srcObject) {
+      const stream = videoElement.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
     }
-  };
-
-  const toggleMic = () => {
-    if (localStream) {
-      const audioTrack = localStream.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = !isMicOn;
-        setIsMicOn(!isMicOn);
-      }
-    }
-  };
-
-  const handleJoinMeeting = (meetingId: string, displayName: string) => {
-    setCurrentMeeting({
-      id: meetingId,
-      title: `Meeting ${meetingId}`,
-      participants: [displayName, 'Host']
-    });
-    setShowJoinModal(false);
-    handleStartMeeting();
-  };
-
-  const handleScheduleMeeting = (eventData: any) => {
-    console.log('Meeting scheduled:', eventData);
-    setShowScheduleModal(false);
-    alert('Meeting scheduled successfully!');
   };
 
   if (isInCall) {
@@ -523,13 +395,13 @@ function VideoConferencing() {
             <div className="bg-slate-800 px-6 py-4 border-b border-slate-700">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-white font-semibold">{currentMeeting?.title}</h2>
-                  <p className="text-slate-300 text-sm">Meeting ID: {currentMeeting?.id}</p>
+                  <h2 className="text-white font-semibold">Video Meeting</h2>
+                  <p className="text-slate-300 text-sm">Meeting ID: DEMO-123</p>
                 </div>
                 <div className="flex items-center space-x-4 text-slate-300 text-sm">
                   <div className="flex items-center space-x-1">
                     <Users className="h-4 w-4" />
-                    <span>{currentMeeting?.participants.length || 0}</span>
+                    <span>2</span>
                   </div>
                   <div className="flex items-center space-x-1">
                     <Clock className="h-4 w-4" />
@@ -541,86 +413,52 @@ function VideoConferencing() {
 
             {/* Video Area */}
             <div className="relative aspect-video bg-slate-800">
-              {isConnecting ? (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-white text-lg">Connecting to meeting...</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="absolute inset-0">
-                  {/* Local Video */}
-                  <div className="w-full h-full relative">
-                    {isVideoOn && localStream ? (
-                      <video
-                        id="localVideo"
-                        className="w-full h-full object-cover rounded-lg"
-                        muted
-                        playsInline
-                        autoPlay
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                        <div className="text-center">
-                          <div className="w-24 h-24 bg-white bg-opacity-20 rounded-full flex items-center justify-center mb-4">
-                            <User className="h-12 w-12 text-white" />
-                          </div>
-                          <p className="text-white text-xl font-medium">You</p>
-                        </div>
+              <div className="absolute inset-0">
+                {/* Local Video */}
+                {isVideoOn ? (
+                  <video
+                    id="localVideo"
+                    className="w-full h-full object-cover"
+                    muted
+                    playsInline
+                    autoPlay
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="w-24 h-24 bg-white bg-opacity-20 rounded-full flex items-center justify-center mb-4">
+                        <User className="h-12 w-12 text-white" />
                       </div>
-                    )}
-                    
-                    {/* Status Indicators */}
-                    <div className="absolute bottom-4 left-4 flex items-center space-x-2">
-                      <span className="text-white text-sm font-medium bg-black bg-opacity-50 px-2 py-1 rounded">
-                        You
-                      </span>
-                      {!isMicOn && (
-                        <div className="bg-red-600 p-1 rounded">
-                          <MicOff className="h-3 w-3 text-white" />
-                        </div>
-                      )}
-                      {!isVideoOn && (
-                        <div className="bg-red-600 p-1 rounded">
-                          <VideoOff className="h-3 w-3 text-white" />
-                        </div>
-                      )}
+                      <p className="text-white text-xl font-medium">You</p>
                     </div>
                   </div>
-                  
-                  {/* Remote Participants */}
-                  <div className="absolute top-4 right-4 space-y-2">
-                    {currentMeeting?.participants.slice(1).map((participant, index) => (
-                      <div key={index} className="w-32 h-24 bg-slate-600 rounded-lg relative">
-                        <div className="w-full h-full bg-gradient-to-br from-green-500 to-blue-600 rounded-lg flex items-center justify-center">
-                          <div className="text-center">
-                            <User className="h-6 w-6 text-white mx-auto mb-1" />
-                            <p className="text-white text-xs">{participant}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                )}
+                
+                {/* Remote participant */}
+                <div className="absolute top-4 right-4 w-32 h-24 bg-slate-600 rounded-lg">
+                  <div className="w-full h-full bg-gradient-to-br from-green-500 to-blue-600 rounded-lg flex items-center justify-center">
+                    <div className="text-center">
+                      <User className="h-6 w-6 text-white mx-auto mb-1" />
+                      <p className="text-white text-xs">Client</p>
+                    </div>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
 
             {/* Controls */}
             <div className="p-6 bg-slate-900">
               <div className="flex items-center justify-center space-x-4">
                 <button
-                  onClick={toggleMic}
+                  onClick={() => setIsMicOn(!isMicOn)}
                   className={`p-3 rounded-full ${isMicOn ? 'bg-slate-700 hover:bg-slate-600' : 'bg-red-600 hover:bg-red-700'} transition-colors`}
-                  title={isMicOn ? 'Mute' : 'Unmute'}
                 >
                   {isMicOn ? <Mic className="h-6 w-6 text-white" /> : <MicOff className="h-6 w-6 text-white" />}
                 </button>
                 
                 <button
-                  onClick={toggleVideo}
+                  onClick={() => setIsVideoOn(!isVideoOn)}
                   className={`p-3 rounded-full ${isVideoOn ? 'bg-slate-700 hover:bg-slate-600' : 'bg-red-600 hover:bg-red-700'} transition-colors`}
-                  title={isVideoOn ? 'Turn off camera' : 'Turn on camera'}
                 >
                   {isVideoOn ? <Video className="h-6 w-6 text-white" /> : <VideoOff className="h-6 w-6 text-white" />}
                 </button>
@@ -636,7 +474,6 @@ function VideoConferencing() {
                 <button
                   onClick={handleEndCall}
                   className="p-3 rounded-full bg-red-600 hover:bg-red-700 transition-colors"
-                  title="End call"
                 >
                   <PhoneOff className="h-6 w-6 text-white" />
                 </button>
@@ -704,7 +541,7 @@ function VideoConferencing() {
           </div>
         </div>
 
-        {/* Simple Modals */}
+        {/* Simple Schedule Modal */}
         {showScheduleModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
@@ -725,7 +562,10 @@ function VideoConferencing() {
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg"
                 />
                 <button
-                  onClick={() => handleScheduleMeeting({})}
+                  onClick={() => {
+                    alert('Meeting scheduled successfully!');
+                    setShowScheduleModal(false);
+                  }}
                   className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
                 >
                   Schedule Meeting
@@ -735,6 +575,7 @@ function VideoConferencing() {
           </div>
         )}
 
+        {/* Simple Join Modal */}
         {showJoinModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
@@ -749,19 +590,16 @@ function VideoConferencing() {
                   type="text"
                   placeholder="Meeting ID"
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                  id="meetingIdInput"
                 />
                 <input
                   type="text"
                   placeholder="Your name"
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                  id="displayNameInput"
                 />
                 <button
                   onClick={() => {
-                    const meetingId = (document.getElementById('meetingIdInput') as HTMLInputElement)?.value || 'DEMO-123';
-                    const displayName = (document.getElementById('displayNameInput') as HTMLInputElement)?.value || 'Guest';
-                    handleJoinMeeting(meetingId, displayName);
+                    setShowJoinModal(false);
+                    handleStartMeeting();
                   }}
                   className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
                 >
@@ -776,6 +614,47 @@ function VideoConferencing() {
   );
 }
 
+// Meeting Join Route Component
+function MeetingJoinRoute() {
+  const { meetingId } = useParams<{ meetingId: string }>();
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
+      <div className="max-w-md w-full">
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center mb-4">
+            <div className="p-3 bg-blue-600 rounded-xl">
+              <Video className="h-8 w-8 text-white" />
+            </div>
+          </div>
+          <h1 className="text-3xl font-bold text-white mb-2">Join Meeting</h1>
+          <p className="text-slate-300">Meeting ID: {meetingId}</p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-2xl p-6">
+          <div className="space-y-4">
+            <input
+              type="text"
+              placeholder="Your Name"
+              className="w-full px-3 py-3 border border-slate-300 rounded-lg"
+            />
+            <input
+              type="email"
+              placeholder="Email Address"
+              className="w-full px-3 py-3 border border-slate-300 rounded-lg"
+            />
+            <button
+              onClick={() => alert(`Joining meeting ${meetingId}`)}
+              className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700"
+            >
+              Join Meeting
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Main App Component
 function MainApp() {
