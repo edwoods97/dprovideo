@@ -1559,7 +1559,6 @@ function VideoConferencing() {
                 <div className="flex items-center space-x-4">
                   {/* FIXED INVITE BUTTON */}
                   <button
-                    type="button"
                     onClick={handleInviteClick}
                     className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 text-sm font-medium shadow-lg cursor-pointer"
                   >
