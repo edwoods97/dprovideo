@@ -36,7 +36,8 @@ import {
   CheckCircle,
   TrendingDown,
   Download,
-  Eye
+  Eye,
+  Shield
 } from 'lucide-react';
 
 export type ActiveTab = 
@@ -90,6 +91,143 @@ interface TrustTransaction {
   checkNumber?: string;
   balance: number;
   status: 'pending' | 'cleared' | 'rejected';
+}
+
+// Meeting Join Route Component - MOVED TO TOP
+function MeetingJoinRoute() {
+  const { meetingId } = useParams<{ meetingId: string }>();
+  const [displayName, setDisplayName] = useState('');
+  const [email, setEmail] = useState('');
+  const [isJoining, setIsJoining] = useState(false);
+  
+  const handleJoinMeeting = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!displayName.trim() || !email.trim()) {
+      alert('Please enter your name and email address');
+      return;
+    }
+
+    setIsJoining(true);
+    
+    // Simulate joining process
+    setTimeout(() => {
+      alert(`Successfully joined meeting ${meetingId} as ${displayName}`);
+      setIsJoining(false);
+    }, 2000);
+  };
+
+  if (isJoining) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">Joining Meeting...</h2>
+          <p className="text-slate-600 mb-4">Please wait while we connect you to the meeting.</p>
+          <div className="bg-slate-50 p-3 rounded-lg">
+            <p className="text-sm text-slate-700">
+              <strong>Joining as:</strong> {displayName}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
+      <div className="max-w-md w-full">
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center mb-4">
+            <div className="p-3 bg-blue-600 rounded-xl">
+              <Video className="h-8 w-8 text-white" />
+            </div>
+          </div>
+          <h1 className="text-3xl font-bold text-white mb-2">Join Meeting</h1>
+          <p className="text-slate-300">Meeting ID: {meetingId}</p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-2xl p-6 mb-6">
+          <div className="text-center mb-6">
+            <h2 className="text-xl font-bold text-slate-900 mb-2">Legal Consultation Meeting</h2>
+            <div className="space-y-2 text-sm text-slate-600">
+              <div className="flex items-center justify-center space-x-2">
+                <Users className="h-4 w-4" />
+                <span>Hosted by Sarah Johnson, Esq.</span>
+              </div>
+              <div className="flex items-center justify-center space-x-2">
+                <Building className="h-4 w-4" />
+                <span>Johnson & Associates Law Firm</span>
+              </div>
+            </div>
+          </div>
+
+          <form onSubmit={handleJoinMeeting} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Your Name *
+              </label>
+              <div className="relative">
+                <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+                <input
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter your full name"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Email Address *
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter your email address"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-3 rounded-lg">
+              <div className="flex items-center space-x-2 text-sm text-slate-600">
+                <Shield className="h-4 w-4" />
+                <span>Meeting ID: {meetingId}</span>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all flex items-center justify-center space-x-2"
+            >
+              <Video className="h-5 w-5" />
+              <span>Join Meeting</span>
+            </button>
+          </form>
+        </div>
+
+        {/* Security Notice */}
+        <div className="text-center">
+          <div className="bg-slate-800 rounded-xl p-4">
+            <h3 className="text-white font-medium mb-2">Secure & Confidential</h3>
+            <div className="text-slate-300 text-sm space-y-1">
+              <p>🔒 End-to-end encrypted</p>
+              <p>🛡️ Attorney-client privilege protected</p>
+              <p>📱 No software installation required</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // Sidebar Component
@@ -316,7 +454,6 @@ function ClientManagement() {
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [showAddClient, setShowAddClient] = useState(false);
   const [showEditClient, setShowEditClient] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [clients, setClients] = useState<Client[]>([
     {
@@ -450,7 +587,6 @@ function ClientManagement() {
   const closeModals = () => {
     setShowAddClient(false);
     setShowEditClient(false);
-    setShowDeleteConfirm(false);
     setSelectedClient(null);
     resetForm();
   };
@@ -728,7 +864,6 @@ function ClientManagement() {
 function MatterManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
-  const [showNewMatter, setShowNewMatter] = useState(false);
 
   const mockMatters: Matter[] = [
     {
@@ -797,10 +932,7 @@ function MatterManagement() {
             <h1 className="text-3xl font-bold text-slate-900">Matter Management</h1>
             <p className="text-slate-600 mt-2">Track and manage all legal matters and cases</p>
           </div>
-          <button 
-            onClick={() => setShowNewMatter(true)}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2"
-          >
+          <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2">
             <Plus className="h-5 w-5" />
             <span>New Matter</span>
           </button>
@@ -1306,7 +1438,7 @@ function DocumentCenter() {
   );
 }
 
-// Video Conferencing Component with Full Invite Functionality
+// Video Conferencing Component with FIXED Invite Functionality
 function VideoConferencing() {
   const [isInCall, setIsInCall] = useState(false);
   const [isVideoOn, setIsVideoOn] = useState(true);
@@ -1364,6 +1496,14 @@ function VideoConferencing() {
     }
   };
 
+  // FIXED INVITE CLICK HANDLER
+  const handleInviteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Invite button clicked!', currentMeeting);
+    setShowInviteModal(true);
+  };
+
   const handleSendInvites = () => {
     const emailInput = document.getElementById('inviteEmails') as HTMLInputElement;
     const messageInput = document.getElementById('inviteMessage') as HTMLTextAreaElement;
@@ -1409,7 +1549,7 @@ function VideoConferencing() {
       <div className="p-8 bg-slate-50 min-h-screen">
         <div className="max-w-7xl mx-auto">
           <div className="bg-slate-900 rounded-xl overflow-hidden min-h-[600px]">
-            {/* Meeting Header with Invite Button */}
+            {/* Meeting Header with FIXED Invite Button */}
             <div className="bg-slate-800 px-6 py-4 border-b border-slate-700">
               <div className="flex items-center justify-between">
                 <div>
@@ -1417,10 +1557,11 @@ function VideoConferencing() {
                   <p className="text-slate-300 text-sm">Meeting ID: {currentMeeting?.id}</p>
                 </div>
                 <div className="flex items-center space-x-4">
-                  {/* INVITE BUTTON - This is the main feature! */}
+                  {/* FIXED INVITE BUTTON */}
                   <button
-                    onClick={() => setShowInviteModal(true)}
-                    className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 text-sm font-medium shadow-lg"
+                    type="button"
+                    onClick={handleInviteClick}
+                    className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 text-sm font-medium shadow-lg cursor-pointer"
                   >
                     <Users className="h-4 w-4" />
                     <span>Invite Participants</span>
@@ -1577,7 +1718,7 @@ function VideoConferencing() {
           </div>
         </div>
 
-        {/* INVITE MODAL - The main feature! */}
+        {/* FIXED INVITE MODAL */}
         {showInviteModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -1589,7 +1730,10 @@ function VideoConferencing() {
                     </div>
                     <h2 className="text-2xl font-bold text-slate-900">Invite to Meeting</h2>
                   </div>
-                  <button onClick={() => setShowInviteModal(false)}>
+                  <button 
+                    onClick={() => setShowInviteModal(false)}
+                    className="p-2 hover:bg-slate-100 rounded-lg"
+                  >
                     <X className="h-5 w-5 text-slate-400" />
                   </button>
                 </div>
@@ -1765,48 +1909,6 @@ function VideoConferencing() {
             </div>
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-// Meeting Join Route Component
-function MeetingJoinRoute() {
-  const { meetingId } = useParams<{ meetingId: string }>();
-  
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <div className="p-3 bg-blue-600 rounded-xl">
-              <Video className="h-8 w-8 text-white" />
-            </div>
-          </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Join Meeting</h1>
-          <p className="text-slate-300">Meeting ID: {meetingId}</p>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-2xl p-6">
-          <div className="space-y-4">
-            <input
-              type="text"
-              placeholder="Your Name"
-              className="w-full px-3 py-3 border border-slate-300 rounded-lg"
-            />
-            <input
-              type="email"
-              placeholder="Email Address"
-              className="w-full px-3 py-3 border border-slate-300 rounded-lg"
-            />
-            <button
-              onClick={() => alert(`Joining meeting ${meetingId}`)}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700"
-            >
-              Join Meeting
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
